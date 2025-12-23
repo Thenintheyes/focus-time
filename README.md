@@ -1,5 +1,4 @@
-#
-Focus Time
+#Focus Time
 
 A minimalist, high-precision time management tool designed for deep work sessions. It features a Clock, Countdown Timer, and Stopwatch in a distraction-free, full-screen interface.
 
@@ -70,7 +69,8 @@ FontAwesome (Icons)
 WorldTimeAPI (Time Synchronization)
 
 ⚠️ Copyright & License
+-------------------------
 
-© 2025 [Your Name]. All Rights Reserved.
+© 2025 Thenintheyes. All Rights Reserved.
 
 This project and its source code are the intellectual property of the author. You may not use, copy, modify, distribute, or sell this code without explicit written permission from the author.
