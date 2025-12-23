@@ -1,0 +1,650 @@
+<!-- 
+    HOW TO RUN IN VS CODE:
+    1. Install the "Live Server" extension in VS Code.
+    2. Right-click this file editor and choose "Open with Live Server".
+    3. Ensure you have an active internet connection (for Fonts and Tailwind CSS).
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Time - Clock, Timer & Stopwatch</title>
+    <!-- Prevent 404 Favicon error in local development -->
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Loading a diverse set of fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Archivo+Black&family=Bangers&family=Bebas+Neue&family=Cinzel:wght@400;700&family=Inter:wght@100;400;900&family=JetBrains+Mono:wght@400;700&family=Lobster&family=Montserrat:wght@100;400;900&family=Orbitron:wght@400;900&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:wght@400;700&family=Poppins:wght@100;400;600;800&family=Press+Start+2P&family=Roboto+Mono:wght@300;700&family=Share+Tech+Mono&family=Six+Caps&family=Special+Elite&family=Teko:wght@300;400;500;600;700&family=Unbounded:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            overflow: hidden; /* Prevent scrolling */
+            transition: background-color 0.3s;
+        }
+
+        /* Hide scrollbars */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* Focus Mode Utility */
+        .focus-mode .ui-element {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        
+        /* Font Classes Mapping */
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .font-roboto-mono { font-family: 'Roboto Mono', monospace; }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        .font-bangers { font-family: 'Bangers', cursive; }
+        .font-lobster { font-family: 'Lobster', cursive; }
+        .font-press-start { font-family: 'Press Start 2P', cursive; }
+        .font-special-elite { font-family: 'Special Elite', cursive; }
+        .font-share-tech { font-family: 'Share Tech Mono', monospace; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .font-abril { font-family: 'Abril Fatface', cursive; }
+        
+        /* New Fonts */
+        .font-unbounded { font-family: 'Unbounded', sans-serif; }
+        .font-six-caps { font-family: 'Six Caps', sans-serif; }
+        .font-archivo-black { font-family: 'Archivo Black', sans-serif; }
+        .font-permanent-marker { font-family: 'Permanent Marker', cursive; }
+        .font-claimcheck { font-family: 'Bebas Neue', sans-serif; } 
+        .font-revenue { font-family: 'Teko', sans-serif; }         
+        .font-jetbrains { font-family: 'JetBrains Mono', monospace; }
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-poppins-thin { font-family: 'Poppins', sans-serif; font-weight: 100; }
+
+        /* Custom Input Styling */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        
+        .timer-input {
+            background: transparent;
+            border-bottom: 2px solid #333;
+            color: white;
+            text-align: center;
+            font-size: 2rem;
+            width: 80px;
+            transition: border-color 0.3s;
+        }
+        .timer-input:focus {
+            outline: none;
+            border-bottom-color: #fff;
+        }
+
+        /* Smooth visibility transitions */
+        .ui-element {
+            transition: opacity 0.3s ease;
+        }
+
+        /* Blink animation for paused state */
+        .blink {
+            animation: blinker 1.5s linear infinite;
+        }
+        @keyframes blinker {
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center relative select-none antialiased">
+
+    <!-- Keyboard Hint Toast -->
+    <div id="toast" class="fixed top-10 left-1/2 transform -translate-x-1/2 bg-zinc-900 text-zinc-400 px-4 py-2 rounded-full text-xs font-mono opacity-0 transition-opacity duration-500 pointer-events-none z-50">
+        Press 'F' for Focus Mode • 'Space' to Start/Stop
+    </div>
+
+    <!-- Main Display Area -->
+    <div id="main-display" class="flex-grow flex flex-col items-center justify-center w-full z-10 text-center">
+        <!-- The Big Time (Converted to Flexbox for stability) -->
+        <div id="time-display" class="font-inter text-[25vw] leading-none tracking-tight transition-all duration-300 select-none flex justify-center gap-[1vw]">
+            <div id="t-h" class="tabular-nums text-center w-[2.2ch]">00</div>
+            <div id="t-m" class="tabular-nums text-center w-[2.2ch]">00</div>
+            <div id="t-s" class="tabular-nums text-center w-[2.2ch]">00</div>
+        </div>
+        
+        <!-- Milliseconds (Stopwatch only) -->
+        <div id="ms-display" class="text-4xl mt-4 font-mono text-zinc-500 hidden">.00</div>
+        
+        <!-- Timer Input Form (Only visible in Timer Setup state) -->
+        <div id="timer-setup" class="hidden flex flex-col items-center gap-6 mt-8 ui-element">
+            <div class="flex items-center gap-4 text-4xl font-light">
+                <div class="flex flex-col items-center">
+                    <input type="number" id="h-input" class="timer-input font-mono" placeholder="00" min="0" max="99">
+                    <span class="text-xs text-zinc-500 mt-2">HR</span>
+                </div>
+                <!-- Removed Colon -->
+                <div class="flex flex-col items-center">
+                    <input type="number" id="m-input" class="timer-input font-mono" placeholder="00" min="0" max="59">
+                    <span class="text-xs text-zinc-500 mt-2">MIN</span>
+                </div>
+                <!-- Removed Colon -->
+                <div class="flex flex-col items-center">
+                    <input type="number" id="s-input" class="timer-input font-mono" placeholder="00" min="0" max="59">
+                    <span class="text-xs text-zinc-500 mt-2">SEC</span>
+                </div>
+            </div>
+            <button id="start-timer-btn" class="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-zinc-200 transition">
+                START TIMER
+            </button>
+        </div>
+
+        <!-- Status Message (e.g. "Timer Done") -->
+        <div id="status-msg" class="text-red-500 text-2xl mt-4 font-bold tracking-widest uppercase opacity-0 transition-opacity">
+            Time's Up
+        </div>
+    </div>
+
+    <!-- Bottom Controls UI -->
+    <div id="controls-ui" class="ui-element absolute bottom-0 w-full p-8 flex flex-col md:flex-row justify-between items-center bg-gradient-to-t from-black via-black to-transparent gap-6 z-20">
+        
+        <!-- Mode Switcher -->
+        <div class="flex bg-zinc-900 rounded-full p-1 gap-1">
+            <button onclick="setMode('clock')" id="btn-clock" class="px-6 py-2 rounded-full text-sm font-medium transition-colors bg-zinc-800 text-white">Clock</button>
+            <button onclick="setMode('timer')" id="btn-timer" class="px-6 py-2 rounded-full text-sm font-medium transition-colors text-zinc-400 hover:text-white">Timer</button>
+            <button onclick="setMode('stopwatch')" id="btn-stopwatch" class="px-6 py-2 rounded-full text-sm font-medium transition-colors text-zinc-400 hover:text-white">Stopwatch</button>
+        </div>
+
+        <!-- Action Buttons (Reset/Play/Pause) for Timer/Stopwatch -->
+        <div id="action-controls" class="flex gap-4 opacity-0 pointer-events-none transition-opacity">
+             <button id="reset-btn" class="w-12 h-12 rounded-full border border-zinc-700 text-zinc-400 hover:text-white hover:border-white flex items-center justify-center transition" title="Reset">
+                <i class="fa-solid fa-rotate-left"></i>
+            </button>
+            <button id="main-action-btn" class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:bg-zinc-200 transition shadow-lg shadow-zinc-900/50" title="Start/Pause (Space)">
+                <i class="fa-solid fa-play" id="action-icon"></i>
+            </button>
+        </div>
+
+        <!-- Font Selector -->
+        <div class="relative">
+            <button id="font-toggle-btn" class="w-12 h-12 rounded-full border border-zinc-700 text-zinc-400 hover:text-white hover:border-white flex items-center justify-center transition font-serif italic text-xl bg-zinc-900/50" title="Change Font">
+                Aa
+            </button>
+            
+            <!-- Dropdown -->
+            <div id="font-menu" class="absolute bottom-full right-0 mb-4 w-48 bg-zinc-900 rounded-xl border border-zinc-800 shadow-2xl overflow-hidden hidden max-h-64 overflow-y-auto z-50">
+                <div class="p-1 flex flex-col gap-1" id="font-list">
+                    <!-- Fonts injected by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Toggle Button (Always slightly visible) -->
+    <button id="fs-toggle" class="fixed top-6 right-6 text-zinc-600 hover:text-white transition z-50 ui-element" title="Toggle Fullscreen (F)">
+        <i class="fa-solid fa-expand text-xl"></i>
+    </button>
+
+    <script>
+        // --- State ---
+        const state = {
+            mode: 'clock', // clock, timer, stopwatch
+            isRunning: false,
+            startTime: 0,
+            elapsedTime: 0,
+            timerDuration: 0,
+            timerRemaining: 0,
+            timerInterval: null,
+            clockInterval: null,
+            stopwatchInterval: null,
+            isFocusMode: false,
+            font: 'font-inter',
+            lastTimeString: '', // Track last time to optimize updates
+            timeOffset: 0 // Offset between local system time and real server time
+        };
+
+        // --- Config ---
+        const fonts = [
+            { name: 'Claimcheck', class: 'font-claimcheck' },
+            { name: 'REVENUE', class: 'font-revenue' },
+            { name: 'Montserrat', class: 'font-montserrat' },
+            { name: 'JetBrains', class: 'font-jetbrains' },
+            { name: 'Poppins', class: 'font-poppins' },
+            { name: 'Poppins Thin', class: 'font-poppins-thin' },
+            { name: 'Hanson', class: 'font-unbounded' },
+            { name: 'Pisilograph', class: 'font-permanent-marker' },
+            { name: 'Typo Longest', class: 'font-six-caps' },
+            { name: 'Coolvetica', class: 'font-archivo-black' },
+            { name: 'Modern Sans', class: 'font-inter' },
+            { name: 'Digital', class: 'font-orbitron' },
+            { name: 'Tech Mono', class: 'font-share-tech' },
+            { name: 'Coding', class: 'font-roboto-mono' },
+            { name: 'Retro Game', class: 'font-press-start' },
+            { name: 'Classic Serif', class: 'font-playfair' },
+            { name: 'Typewriter', class: 'font-special-elite' },
+            { name: 'Cinematic', class: 'font-cinzel' },
+            { name: 'Bold Comic', class: 'font-bangers' },
+            { name: 'Script', class: 'font-lobster' },
+            { name: 'Elegant', class: 'font-abril' },
+            { name: 'Heavy', class: 'font-montserrat' },
+        ];
+
+        // --- DOM Elements ---
+        const display = document.getElementById('time-display');
+        const timeH = document.getElementById('t-h');
+        const timeM = document.getElementById('t-m');
+        const timeS = document.getElementById('t-s');
+        
+        const msDisplay = document.getElementById('ms-display');
+        const timerSetup = document.getElementById('timer-setup');
+        const actionControls = document.getElementById('action-controls');
+        const actionBtn = document.getElementById('main-action-btn');
+        const actionIcon = document.getElementById('action-icon');
+        const resetBtn = document.getElementById('reset-btn');
+        const body = document.body;
+        const statusMsg = document.getElementById('status-msg');
+        const fontToggleBtn = document.getElementById('font-toggle-btn');
+        const fontMenu = document.getElementById('font-menu');
+        
+        // --- Helper: Update the stable time display ---
+        function updateDisplayTime(fullString) {
+            // Parses "00 00 00"
+            const parts = fullString.split(' ');
+            if (parts.length === 3) {
+                timeH.innerText = parts[0];
+                timeM.innerText = parts[1];
+                timeS.innerText = parts[2];
+            } else {
+                // Fallback for unexpected formats
+                timeH.innerText = "--";
+                timeM.innerText = "--";
+                timeS.innerText = "--";
+            }
+        }
+
+        // --- Time Synchronization ---
+        async function syncTime() {
+            try {
+                // Indicate syncing
+                const toast = document.getElementById('toast');
+                const originalText = toast.innerText;
+                toast.innerText = "Syncing with Atomic Clock...";
+                toast.style.opacity = '1';
+
+                const requestStart = Date.now();
+                // Request time from a reliable API
+                const response = await fetch('https://worldtimeapi.org/api/ip');
+                const data = await response.json();
+                const requestEnd = Date.now();
+                
+                // --- LATENCY COMPENSATION LOGIC ---
+                // The 'data.datetime' is the timestamp generated by the server.
+                // It took (requestEnd - requestStart) ms for the round trip.
+                // We assume the one-way trip is roughly half of that.
+                // So, the server time represents the real time at roughly (requestEnd - latency/2).
+                
+                const latency = requestEnd - requestStart;
+                const serverTime = new Date(data.datetime).getTime();
+                
+                // Current Real Time = Server Generated Time + One-Way Latency
+                const estimatedRealTime = serverTime + (latency / 2);
+                
+                // The difference we need to add to Date.now() to get Real Time
+                state.timeOffset = estimatedRealTime - requestEnd;
+                
+                console.log(`Time synced. Round-trip: ${latency}ms. Offset adjusted by: ${state.timeOffset}ms`);
+                
+                toast.innerText = "Time Synced Successfully";
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    // Restore hint text after fading out
+                    setTimeout(() => toast.innerText = "Press 'F' for Focus Mode • 'Space' to Start/Stop", 500);
+                }, 2000);
+                
+            } catch (error) {
+                console.warn("Could not sync with internet time. Using system time.", error);
+                const toast = document.getElementById('toast');
+                toast.innerText = "Sync Failed - Using System Time";
+                setTimeout(() => toast.style.opacity = '0', 3000);
+            }
+        }
+
+        // --- Initialization ---
+        function init() {
+            renderFontList();
+            
+            // Start clock immediately with system time
+            startClock();
+            
+            // Attempt to sync with internet time in the background
+            syncTime();
+            
+            // Show toast briefly (initial hint)
+            const toast = document.getElementById('toast');
+            setTimeout(() => toast.style.opacity = '1', 500);
+            setTimeout(() => toast.style.opacity = '0', 4000);
+
+            // Setup Timer Inputs logic
+            document.getElementById('start-timer-btn').addEventListener('click', startTimerFromInput);
+            
+            // Action Buttons
+            actionBtn.addEventListener('click', togglePlayPause);
+            resetBtn.addEventListener('click', resetCurrentMode);
+            
+            // Font Menu Toggle
+            fontToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fontMenu.classList.toggle('hidden');
+            });
+
+            // Close font menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!fontToggleBtn.contains(e.target) && !fontMenu.contains(e.target)) {
+                    fontMenu.classList.add('hidden');
+                }
+            });
+            
+            // Fullscreen
+            document.getElementById('fs-toggle').addEventListener('click', toggleFocusMode);
+        }
+
+        // --- Mode Switching ---
+        window.setMode = (mode) => {
+            // Cleanup previous mode
+            stopAllIntervals();
+            state.isRunning = false;
+            state.elapsedTime = 0;
+            state.timerRemaining = 0;
+            state.mode = mode;
+            
+            // UI Updates
+            updateModeButtons(mode);
+            statusMsg.style.opacity = '0';
+            display.classList.remove('blink');
+            
+            // Mode Specific Logic
+            if (mode === 'clock') {
+                startClock();
+                timerSetup.classList.add('hidden');
+                actionControls.classList.remove('opacity-100', 'pointer-events-auto');
+                actionControls.classList.add('opacity-0', 'pointer-events-none');
+                msDisplay.classList.add('hidden');
+                display.classList.remove('hidden');
+            } else if (mode === 'timer') {
+                updateDisplayTime("00 00 00");
+                display.classList.add('hidden'); // Hide main display initially
+                timerSetup.classList.remove('hidden'); // Show inputs
+                actionControls.classList.remove('opacity-100', 'pointer-events-auto'); // Hide controls until timer starts
+                actionControls.classList.add('opacity-0', 'pointer-events-none');
+                msDisplay.classList.add('hidden');
+            } else if (mode === 'stopwatch') {
+                updateDisplayTime("00 00 00");
+                display.classList.remove('hidden');
+                timerSetup.classList.add('hidden');
+                actionControls.classList.remove('opacity-0', 'pointer-events-none');
+                actionControls.classList.add('opacity-100', 'pointer-events-auto');
+                msDisplay.classList.remove('hidden');
+                msDisplay.innerText = ".00";
+                updateActionIcon();
+            }
+        };
+
+        function updateModeButtons(activeMode) {
+            ['clock', 'timer', 'stopwatch'].forEach(m => {
+                const btn = document.getElementById(`btn-${m}`);
+                if (m === activeMode) {
+                    btn.classList.remove('text-zinc-400', 'bg-transparent');
+                    btn.classList.add('bg-zinc-800', 'text-white');
+                } else {
+                    btn.classList.add('text-zinc-400', 'bg-transparent');
+                    btn.classList.remove('bg-zinc-800', 'text-white');
+                }
+            });
+        }
+
+        function stopAllIntervals() {
+            clearInterval(state.clockInterval);
+            clearInterval(state.timerInterval);
+            cancelAnimationFrame(state.stopwatchInterval);
+        }
+
+        // --- Clock Logic ---
+        function startClock() {
+            function update() {
+                // Apply the offset to get the real time
+                const now = new Date(Date.now() + state.timeOffset);
+                
+                // Replace colons with spaces before passing to updater
+                const timeStr = now.toLocaleTimeString('en-US', { hour12: false }).replace(/:/g, ' ');
+                
+                // Sync Check: Only update the DOM if the time string has actually changed.
+                // This allows us to poll rapidly (every 50ms) without performance cost,
+                // ensuring the second flips exactly when the system clock does.
+                if (timeStr !== state.lastTimeString) {
+                    updateDisplayTime(timeStr);
+                    state.lastTimeString = timeStr;
+                }
+            }
+            update();
+            // Update every 50ms to catch the second change immediately
+            state.clockInterval = setInterval(update, 50);
+        }
+
+        // --- Stopwatch Logic ---
+        function toggleStopwatch() {
+            if (state.isRunning) {
+                // Pause
+                state.isRunning = false;
+                cancelAnimationFrame(state.stopwatchInterval);
+                display.classList.add('blink');
+            } else {
+                // Start
+                state.isRunning = true;
+                const startTime = Date.now() - state.elapsedTime;
+                display.classList.remove('blink');
+                
+                function update() {
+                    if (!state.isRunning) return;
+                    state.elapsedTime = Date.now() - startTime;
+                    formatTimeForStopwatch(state.elapsedTime);
+                    state.stopwatchInterval = requestAnimationFrame(update);
+                }
+                state.stopwatchInterval = requestAnimationFrame(update);
+            }
+            updateActionIcon();
+        }
+
+        function formatTimeForStopwatch(ms) {
+            const date = new Date(ms);
+            const m = String(date.getUTCMinutes()).padStart(2, '0');
+            const s = String(date.getUTCSeconds()).padStart(2, '0');
+            const hrs = String(Math.floor(ms / 3600000)).padStart(2, '0');
+            const centis = String(Math.floor((ms % 1000) / 10)).padStart(2, '0');
+            
+            updateDisplayTime(`${hrs} ${m} ${s}`);
+            msDisplay.innerText = `.${centis}`;
+        }
+
+        // --- Timer Logic ---
+        function startTimerFromInput() {
+            const h = parseInt(document.getElementById('h-input').value) || 0;
+            const m = parseInt(document.getElementById('m-input').value) || 0;
+            const s = parseInt(document.getElementById('s-input').value) || 0;
+            
+            const totalSeconds = (h * 3600) + (m * 60) + s;
+            
+            if (totalSeconds <= 0) return;
+
+            state.timerDuration = totalSeconds;
+            state.timerRemaining = totalSeconds;
+            
+            // Switch UI
+            timerSetup.classList.add('hidden');
+            display.classList.remove('hidden');
+            actionControls.classList.remove('opacity-0', 'pointer-events-none');
+            actionControls.classList.add('opacity-100', 'pointer-events-auto');
+            
+            startTimerCountdown();
+        }
+
+        function startTimerCountdown() {
+            if (state.timerRemaining <= 0) return;
+            
+            state.isRunning = true;
+            display.classList.remove('blink');
+            updateActionIcon();
+            updateTimerDisplay(); // Show immediate value
+
+            // Clear any existing interval to prevent double-speed
+            if (state.timerInterval) clearInterval(state.timerInterval);
+
+            state.timerInterval = setInterval(() => {
+                state.timerRemaining--;
+                updateTimerDisplay();
+                
+                if (state.timerRemaining <= 0) {
+                    timerFinished();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const h = Math.floor(state.timerRemaining / 3600);
+            const m = Math.floor((state.timerRemaining % 3600) / 60);
+            const s = state.timerRemaining % 60;
+            
+            updateDisplayTime(`${String(h).padStart(2,'0')} ${String(m).padStart(2,'0')} ${String(s).padStart(2,'0')}`);
+        }
+
+        function timerFinished() {
+            clearInterval(state.timerInterval);
+            state.isRunning = false;
+            updateDisplayTime("00 00 00");
+            statusMsg.style.opacity = '1';
+            display.classList.add('blink');
+            updateActionIcon();
+        }
+
+        function toggleTimer() {
+            if (state.isRunning) {
+                // Pause
+                state.isRunning = false;
+                clearInterval(state.timerInterval);
+                display.classList.add('blink');
+            } else {
+                // Resume
+                if (state.timerRemaining > 0) {
+                    startTimerCountdown();
+                } else {
+                    // Reset if finished
+                    timerSetup.classList.remove('hidden');
+                    display.classList.add('hidden');
+                    actionControls.classList.add('opacity-0', 'pointer-events-none');
+                    statusMsg.style.opacity = '0';
+                }
+            }
+            updateActionIcon();
+        }
+
+        // --- Common Controls ---
+        function togglePlayPause() {
+            if (state.mode === 'stopwatch') toggleStopwatch();
+            if (state.mode === 'timer') toggleTimer();
+        }
+
+        function resetCurrentMode() {
+            stopAllIntervals();
+            state.isRunning = false;
+            statusMsg.style.opacity = '0';
+            display.classList.remove('blink');
+            updateActionIcon();
+
+            if (state.mode === 'stopwatch') {
+                state.elapsedTime = 0;
+                updateDisplayTime("00 00 00");
+                msDisplay.innerText = ".00";
+            } else if (state.mode === 'timer') {
+                state.timerRemaining = 0;
+                updateDisplayTime("00 00 00");
+                display.classList.add('hidden');
+                timerSetup.classList.remove('hidden');
+                actionControls.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function updateActionIcon() {
+            if (state.isRunning) {
+                actionIcon.classList.remove('fa-play');
+                actionIcon.classList.add('fa-pause');
+            } else {
+                actionIcon.classList.remove('fa-pause');
+                actionIcon.classList.add('fa-play');
+            }
+        }
+
+        // --- Fonts & UX ---
+        function renderFontList() {
+            const list = document.getElementById('font-list');
+            list.innerHTML = ''; // Clear existing list to prevent duplicates
+            fonts.forEach(f => {
+                const item = document.createElement('button');
+                item.className = `text-left px-4 py-2 hover:bg-zinc-800 text-sm text-zinc-300 rounded transition ${f.class}`;
+                item.innerText = f.name;
+                item.onclick = () => {
+                    display.className = display.className.replace(/font-[\w-]+/g, ''); // remove old font
+                    display.classList.add(f.class);
+                    // Hide menu after selection
+                    fontMenu.classList.add('hidden');
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function toggleFocusMode() {
+            state.isFocusMode = !state.isFocusMode;
+            if (state.isFocusMode) {
+                body.classList.add('focus-mode');
+            } else {
+                body.classList.remove('focus-mode');
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // --- Keyboard Events ---
+        document.addEventListener('keydown', (e) => {
+            // Spacebar
+            if (e.code === 'Space') {
+                if (state.mode !== 'clock') {
+                    // If focusing inside inputs, don't trigger start/stop
+                    if (document.activeElement.tagName === 'INPUT') return;
+                    
+                    e.preventDefault();
+                    togglePlayPause();
+                }
+            }
+            
+            // F key
+            if (e.code === 'KeyF' || e.code === 'Keyf') {
+                // Ignore if typing in input
+                if (document.activeElement.tagName === 'INPUT') return;
+                toggleFocusMode();
+            }
+            
+            // Escape (Exit Focus)
+            if (e.code === 'Escape' && state.isFocusMode) {
+                toggleFocusMode();
+            }
+        });
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>
