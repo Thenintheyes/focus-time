@@ -1,8 +1,9 @@
-#Focus Time
+# Focus Time
 
 A minimalist, high-precision time management tool designed for deep work sessions. It features a Clock, Countdown Timer, and Stopwatch in a distraction-free, full-screen interface.
 
 🌟 Features
+----
 
 Triple Mode: Seamlessly switch between Clock, Timer, and Stopwatch.
 
@@ -23,6 +24,7 @@ Tabular Numbers: Prevents "jittering" as digits change width.
 Responsive: Looks perfect on desktops, tablets, and mobile devices.
 
 🚀 How to Use
+----
 
 1. Online (Live Demo)
 
