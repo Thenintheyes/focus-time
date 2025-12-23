@@ -26,39 +26,17 @@ Responsive: Looks perfect on desktops, tablets, and mobile devices.
 🚀 How to Use
 ----
 
-1. Online (Live Demo)
+#### ⌨️ Keyboard Shortcuts
 
-[Insert your GitHub Pages link here once hosted]
 
-2. Run Locally
+Space : Start / Pause (Timer & Stopwatch)
 
-Since this is a single-file application, you don't need to install anything.
+F : Toggle Full-screen Focus Mode
 
-Download index.html.
-
-Open it in any modern web browser (Chrome, Edge, Firefox, Safari).
-
-Note: An internet connection is required to load the fonts and styles.
-
-⌨️ Keyboard Shortcuts
-
-Key
-
-Action
-
-Space
-
-Start / Pause (Timer & Stopwatch)
-
-F
-
-Toggle Full-screen Focus Mode
-
-Esc
-
-Exit Focus Mode
+Esc : Exit Focus Mode
 
 🛠️ Built With
+--
 
 HTML5 & JavaScript (ES6+)
 
