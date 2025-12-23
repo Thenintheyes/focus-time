@@ -1,4 +1,6 @@
 # Focus Time
+https://thenintheyes.github.io/focus-time/
+--
 
 A minimalist, high-precision time management tool designed for deep work sessions. It features a Clock, Countdown Timer, and Stopwatch in a distraction-free, full-screen interface.
 
